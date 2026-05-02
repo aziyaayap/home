@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kymora IT — Design Canvas</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; background: #f0eee9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+    #root { height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="tweaks-panel.jsx" data-type="module"></script>
+  <script type="text/babel" src="design-canvas.jsx" data-type="module"></script>
+
+  <script type="text/babel">
+
+    /* ── Tweak defaults ─────────────────────────────────────────── */
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "primaryColor": "#D97757",
+      "accentColor":  "#3B82F6",
+      "companyName":  "Kymora IT",
+      "tagline":      "Enterprise Technology Solutions",
+      "dark":         false
+    }/*EDITMODE-END*/;
+
+    /* ── Toolbar ────────────────────────────────────────────────── */
+    function Toolbar({ editActive, onToggleEdit }) {
+      return (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, height: 44, zIndex: 50,
+          background: 'rgba(255,255,255,.88)', backdropFilter: 'blur(14px)',
+          borderBottom: '.5px solid rgba(0,0,0,.08)',
+          display: 'flex', alignItems: 'center', padding: '0 18px', gap: 14,
+        }}>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect width="22" height="22" rx="6" fill="#D97757"/>
+            <path d="M6 16 L11 6 L16 16" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M8 12.5 H14" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1a1510', letterSpacing: -.2 }}>Kymora IT</span>
+          <span style={{ fontSize: 11, color: '#a39880', fontWeight: 500 }}>Design Canvas</span>
+          <div style={{ flex: 1 }} />
+          <kbd style={{
+            fontSize: 10, color: '#a39880', background: 'rgba(0,0,0,.05)',
+            border: '.5px solid rgba(0,0,0,.1)', borderRadius: 5,
+            padding: '2px 6px', letterSpacing: .3,
+          }}>⌥ scroll = pan · ⌘ scroll = zoom</kbd>
+          <button
+            onClick={onToggleEdit}
+            style={{
+              height: 28, padding: '0 13px', borderRadius: 7, border: 'none',
+              background: editActive ? '#D97757' : 'rgba(0,0,0,.07)',
+              color: editActive ? '#fff' : '#3d3728',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              transition: 'background .15s, color .15s',
+            }}>
+            {editActive ? '✕ Close Tweaks' : '⚙ Tweaks'}
+          </button>
+        </div>
+      );
+    }
+
+    /* ── Artboard screens ───────────────────────────────────────── */
+
+    function HeroScreen({ primary, company, tagline, dark }) {
+      const bg   = dark ? '#0f172a' : '#ffffff';
+      const text = dark ? '#f8fafc' : '#1e293b';
+      const sub  = dark ? '#94a3b8' : '#64748b';
+      return (
+        <div style={{ height: '100%', background: bg, padding: '36px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 18 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '4px 10px', borderRadius: 20,
+            background: primary + '22', color: primary,
+            fontSize: 10, fontWeight: 700, letterSpacing: .8, width: 'fit-content',
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: primary, display: 'inline-block' }}/>
+            ENTERPRISE · TECHNOLOGY
+          </div>
+          <div style={{ fontSize: 34, fontWeight: 800, color: text, lineHeight: 1.08, letterSpacing: -1 }}>
+            {company}
+          </div>
+          <div style={{ fontSize: 13.5, color: sub, lineHeight: 1.65, maxWidth: 265 }}>
+            {tagline}. Transforming businesses with cutting-edge IT solutions.
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <button style={{
+              padding: '10px 20px', borderRadius: 8, border: 'none',
+              background: primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}>Get Started →</button>
+            <button style={{
+              padding: '10px 16px', borderRadius: 8, border: '.5px solid rgba(0,0,0,.12)',
+              background: 'transparent', color: text, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            }}>Learn more</button>
+          </div>
+          <div style={{ display: 'flex', gap: 28, marginTop: 16 }}>
+            {[['500+', 'Clients'], ['12yr', 'Experience'], ['99.9%', 'Uptime']].map(([v, l]) => (
+              <div key={l}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: primary }}>{v}</div>
+                <div style={{ fontSize: 10, color: sub, marginTop: 1 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function ServicesScreen({ primary, dark }) {
+      const bg     = dark ? '#0f172a' : '#f8fafc';
+      const cardBg = dark ? '#1e293b' : '#ffffff';
+      const text   = dark ? '#f8fafc' : '#1e293b';
+      const sub    = dark ? '#64748b' : '#64748b';
+      const items  = [
+        { icon: '☁', label: 'Cloud', desc: 'AWS · Azure · GCP' },
+        { icon: '🔒', label: 'Security', desc: 'Zero-trust · SOC2' },
+        { icon: '⚡', label: 'DevOps',  desc: 'CI/CD · Kubernetes' },
+        { icon: '📊', label: 'Analytics', desc: 'BI · Dashboards' },
+        { icon: '🤖', label: 'AI / ML', desc: 'LLMs · MLOps' },
+        { icon: '🛠', label: 'Managed IT', desc: '24/7 Support' },
+      ];
+      return (
+        <div style={{ height: '100%', background: bg, padding: '22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: text }}>Our Services</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+            {items.map(s => (
+              <div key={s.label} style={{
+                background: cardBg, borderRadius: 10, padding: '14px 12px',
+                display: 'flex', flexDirection: 'column', gap: 6,
+                boxShadow: '0 1px 3px rgba(0,0,0,.06)',
+              }}>
+                <div style={{ fontSize: 22 }}>{s.icon}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: text }}>{s.label}</div>
+                <div style={{ fontSize: 10, color: sub }}>{s.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function DashboardScreen({ primary, accent, dark }) {
+      const bg   = dark ? '#0f172a' : '#ffffff';
+      const card = dark ? '#1e293b' : '#f1f5f9';
+      const text = dark ? '#f8fafc' : '#1e293b';
+      const bars = [42, 68, 55, 80, 62, 91, 48, 95, 74, 83, 60, 77];
+      return (
+        <div style={{ height: '100%', background: bg, padding: '18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: text }}>Dashboard</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {[['99.9%','Uptime'], ['2.4ms','Latency'], ['847','Servers']].map(([v, l]) => (
+              <div key={l} style={{ background: card, borderRadius: 8, padding: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: primary }}>{v}</div>
+                <div style={{ fontSize: 9, color: '#94a3b8', marginTop: 2 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ flex: 1, background: card, borderRadius: 10, padding: '12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: text }}>Traffic — last 24 h</div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
+              {bars.map((h, i) => (
+                <div key={i} style={{
+                  flex: 1, height: h + '%', borderRadius: '2px 2px 0 0',
+                  background: i === 7 ? primary : accent + '55',
+                  transition: 'height .3s',
+                }}/>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[['🟢','API online'],['🔵','DB healthy'],['🟡','CDN check']].map(([ic, lb]) => (
+              <div key={lb} style={{ flex: 1, background: card, borderRadius: 8, padding: '8px', fontSize: 9, color: text, textAlign: 'center' }}>
+                <div>{ic}</div><div style={{ marginTop: 3 }}>{lb}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function ContactScreen({ primary, dark }) {
+      const bg      = dark ? '#0f172a' : '#ffffff';
+      const inputBg = dark ? '#1e293b' : '#f8fafc';
+      const text    = dark ? '#f8fafc' : '#1e293b';
+      return (
+        <div style={{ height: '100%', background: bg, padding: '24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: text }}>Get in Touch</div>
+          <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.5 }}>
+            Have a project in mind? We'll get back to you within 24 hours.
+          </div>
+          {['Full Name', 'Email Address', 'Company'].map(ph => (
+            <div key={ph} style={{
+              height: 36, borderRadius: 8, background: inputBg,
+              border: '.5px solid rgba(0,0,0,.1)', padding: '0 12px',
+              display: 'flex', alignItems: 'center', fontSize: 12, color: '#94a3b8',
+            }}>{ph}</div>
+          ))}
+          <div style={{
+            flex: 1, borderRadius: 8, background: inputBg,
+            border: '.5px solid rgba(0,0,0,.1)', padding: '10px 12px',
+            fontSize: 12, color: '#94a3b8',
+          }}>How can we help you?</div>
+          <button style={{
+            height: 40, borderRadius: 8, border: 'none',
+            background: primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}>Send Message →</button>
+        </div>
+      );
+    }
+
+    function TeamScreen({ primary, dark }) {
+      const bg   = dark ? '#0f172a' : '#f8fafc';
+      const card = dark ? '#1e293b' : '#ffffff';
+      const text = dark ? '#f8fafc' : '#1e293b';
+      const sub  = dark ? '#64748b' : '#64748b';
+      const team = [
+        { initials: 'AK', name: 'Alex Kymora', role: 'CEO & Founder' },
+        { initials: 'MR', name: 'Maria R.',    role: 'CTO' },
+        { initials: 'DN', name: 'David N.',    role: 'Head of Security' },
+        { initials: 'SP', name: 'Sara P.',     role: 'Lead DevOps' },
+      ];
+      return (
+        <div style={{ height: '100%', background: bg, padding: '22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: text }}>Our Team</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {team.map(m => (
+              <div key={m.name} style={{
+                background: card, borderRadius: 10, padding: '12px 14px',
+                display: 'flex', alignItems: 'center', gap: 12,
+                boxShadow: '0 1px 3px rgba(0,0,0,.06)',
+              }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: primary + '22', color: primary,
+                  fontSize: 13, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>{m.initials}</div>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: text }}>{m.name}</div>
+                  <div style={{ fontSize: 10, color: sub, marginTop: 1 }}>{m.role}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    /* ── App ────────────────────────────────────────────────────── */
+    function App() {
+      const [t, setTweak]       = useTweaks(TWEAK_DEFAULTS);
+      const [editActive, setEdit] = React.useState(false);
+
+      const toggleEdit = () => {
+        const next = !editActive;
+        setEdit(next);
+        window.postMessage({ type: next ? '__activate_edit_mode' : '__deactivate_edit_mode' }, '*');
+      };
+
+      React.useEffect(() => {
+        const h = (e) => {
+          if (e?.data?.type === '__edit_mode_dismissed') setEdit(false);
+        };
+        window.addEventListener('message', h);
+        return () => window.removeEventListener('message', h);
+      }, []);
+
+      return (
+        <>
+          <Toolbar editActive={editActive} onToggleEdit={toggleEdit} />
+          <div style={{ paddingTop: 44, height: '100vh' }}>
+            <DesignCanvas>
+
+              <DCSection id="homepage" title="Homepage" subtitle="Main marketing screens">
+                <DCArtboard id="hero-light" label="Hero · Light" width={340} height={540}>
+                  <HeroScreen primary={t.primaryColor} company={t.companyName} tagline={t.tagline} dark={false} />
+                </DCArtboard>
+                <DCArtboard id="hero-dark" label="Hero · Dark" width={340} height={540}>
+                  <HeroScreen primary={t.primaryColor} company={t.companyName} tagline={t.tagline} dark={true} />
+                </DCArtboard>
+                <DCArtboard id="services" label="Services · Grid" width={300} height={540}>
+                  <ServicesScreen primary={t.primaryColor} dark={t.dark} />
+                </DCArtboard>
+                <DCArtboard id="team" label="Team · Cards" width={280} height={540}>
+                  <TeamScreen primary={t.primaryColor} dark={t.dark} />
+                </DCArtboard>
+                <DCArtboard id="contact" label="Contact · Form" width={300} height={540}>
+                  <ContactScreen primary={t.primaryColor} dark={t.dark} />
+                </DCArtboard>
+              </DCSection>
+
+              <DCSection id="dashboard" title="Admin Dashboard" subtitle="Monitoring & analytics views">
+                <DCArtboard id="dash-light" label="Overview · Light" width={380} height={460}>
+                  <DashboardScreen primary={t.primaryColor} accent={t.accentColor} dark={false} />
+                </DCArtboard>
+                <DCArtboard id="dash-dark" label="Overview · Dark" width={380} height={460}>
+                  <DashboardScreen primary={t.primaryColor} accent={t.accentColor} dark={true} />
+                </DCArtboard>
+              </DCSection>
+
+            </DesignCanvas>
+          </div>
+
+          <TweaksPanel title="Kymora Tweaks">
+            <TweakSection label="Brand" />
+            <TweakText  label="Company" value={t.companyName}  onChange={(v) => setTweak('companyName', v)} />
+            <TweakText  label="Tagline" value={t.tagline}      onChange={(v) => setTweak('tagline', v)} />
+            <TweakSection label="Colors" />
+            <TweakColor label="Primary" value={t.primaryColor} onChange={(v) => setTweak('primaryColor', v)} />
+            <TweakColor label="Accent"  value={t.accentColor}  onChange={(v) => setTweak('accentColor', v)} />
+            <TweakSection label="Theme" />
+            <TweakToggle label="Dark mode" value={t.dark} onChange={(v) => setTweak('dark', v)} />
+          </TweaksPanel>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
