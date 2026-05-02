@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kymora IT — Design Canvas</title>
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -16,313 +16,580 @@
 <body>
   <div id="root"></div>
 
-  <script type="text/babel" src="tweaks-panel.jsx" data-type="module"></script>
-  <script type="text/babel" src="design-canvas.jsx" data-type="module"></script>
-
   <script type="text/babel">
 
-    /* ── Tweak defaults ─────────────────────────────────────────── */
-    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-      "primaryColor": "#D97757",
-      "accentColor":  "#3B82F6",
-      "companyName":  "Kymora IT",
-      "tagline":      "Enterprise Technology Solutions",
-      "dark":         false
-    }/*EDITMODE-END*/;
+  const __TWEAKS_STYLE = `
+    .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+      max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+      background:rgba(250,249,247,.78);color:#29261b;
+      -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+      border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+      box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+      font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+    .twk-hd{display:flex;align-items:center;justify-content:space-between;
+      padding:10px 8px 10px 14px;cursor:move;user-select:none}
+    .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+    .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+      width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1}
+    .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+    .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+      overflow-y:auto;overflow-x:hidden;min-height:0;
+      scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+    .twk-row{display:flex;flex-direction:column;gap:5px}
+    .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+    .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;color:rgba(41,38,27,.72)}
+    .twk-lbl>span:first-child{font-weight:500}
+    .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+      color:rgba(41,38,27,.45);padding:10px 0 0}
+    .twk-sect:first-child{padding-top:0}
+    .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+      border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+      background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+    .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+    .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+      border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+    .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+      background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:pointer}
+    .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+      background:rgba(0,0,0,.15);transition:background .15s;cursor:pointer;padding:0}
+    .twk-toggle[data-on="1"]{background:#34c759}
+    .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+      background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s;font-style:normal}
+    .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+    .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+      border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:pointer;background:transparent;flex-shrink:0}
+    .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+    .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  `;
 
-    /* ── Toolbar ────────────────────────────────────────────────── */
-    function Toolbar({ editActive, onToggleEdit }) {
-      return (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, height: 44, zIndex: 50,
-          background: 'rgba(255,255,255,.88)', backdropFilter: 'blur(14px)',
-          borderBottom: '.5px solid rgba(0,0,0,.08)',
-          display: 'flex', alignItems: 'center', padding: '0 18px', gap: 14,
-        }}>
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <rect width="22" height="22" rx="6" fill="#D97757"/>
-            <path d="M6 16 L11 6 L16 16" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M8 12.5 H14" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-          <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1a1510', letterSpacing: -.2 }}>Kymora IT</span>
-          <span style={{ fontSize: 11, color: '#a39880', fontWeight: 500 }}>Design Canvas</span>
+  function useTweaks(defaults) {
+    const [values, setValues] = React.useState(defaults);
+    const setTweak = React.useCallback((keyOrEdits, val) => {
+      const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+        ? keyOrEdits : { [keyOrEdits]: val };
+      setValues((prev) => ({ ...prev, ...edits }));
+    }, []);
+    return [values, setTweak];
+  }
+
+  function TweaksPanel({ title = 'Tweaks', children, open, onClose }) {
+    const dragRef = React.useRef(null);
+    const offsetRef = React.useRef({ x: 16, y: 16 });
+    const PAD = 16;
+    const clamp = React.useCallback(() => {
+      const p = dragRef.current; if (!p) return;
+      const maxR = Math.max(PAD, window.innerWidth - p.offsetWidth - PAD);
+      const maxB = Math.max(PAD, window.innerHeight - p.offsetHeight - PAD);
+      offsetRef.current = {
+        x: Math.min(maxR, Math.max(PAD, offsetRef.current.x)),
+        y: Math.min(maxB, Math.max(PAD, offsetRef.current.y)),
+      };
+      p.style.right = offsetRef.current.x + 'px';
+      p.style.bottom = offsetRef.current.y + 'px';
+    }, []);
+    React.useEffect(() => { if (open) clamp(); }, [open, clamp]);
+    const onDragStart = (e) => {
+      const p = dragRef.current; if (!p) return;
+      const r = p.getBoundingClientRect();
+      const sx = e.clientX, sy = e.clientY;
+      const sr = window.innerWidth - r.right, sb = window.innerHeight - r.bottom;
+      const move = (ev) => { offsetRef.current = { x: sr - (ev.clientX - sx), y: sb - (ev.clientY - sy) }; clamp(); };
+      const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', up);
+    };
+    if (!open) return null;
+    return (
+      <>
+        <style>{__TWEAKS_STYLE}</style>
+        <div ref={dragRef} className="twk-panel" style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+          <div className="twk-hd" onMouseDown={onDragStart}>
+            <b>{title}</b>
+            <button className="twk-x" onClick={onClose}>✕</button>
+          </div>
+          <div className="twk-body">{children}</div>
+        </div>
+      </>
+    );
+  }
+
+  function TweakSection({ label }) { return <div className="twk-sect">{label}</div>; }
+  function TweakRow({ label, children }) {
+    return <div className="twk-row"><div className="twk-lbl"><span>{label}</span></div>{children}</div>;
+  }
+  function TweakText({ label, value, onChange }) {
+    return <TweakRow label={label}><input className="twk-field" type="text" value={value} onChange={(e) => onChange(e.target.value)} /></TweakRow>;
+  }
+  function TweakColor({ label, value, onChange }) {
+    return (
+      <div className="twk-row twk-row-h">
+        <div className="twk-lbl"><span>{label}</span></div>
+        <input type="color" className="twk-swatch" value={value} onChange={(e) => onChange(e.target.value)} />
+      </div>
+    );
+  }
+  function TweakToggle({ label, value, onChange }) {
+    return (
+      <div className="twk-row twk-row-h">
+        <div className="twk-lbl"><span>{label}</span></div>
+        <button type="button" className="twk-toggle" data-on={value ? '1' : '0'} onClick={() => onChange(!value)}><i /></button>
+      </div>
+    );
+  }
+
+  const DC = {
+    bg: '#f0eee9', grid: 'rgba(0,0,0,0.06)',
+    label: 'rgba(60,50,40,0.7)', title: 'rgba(40,30,20,0.85)', subtitle: 'rgba(60,50,40,0.6)',
+    font: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+  };
+
+  if (!document.getElementById('dc-styles')) {
+    const s = document.createElement('style');
+    s.id = 'dc-styles';
+    s.textContent = [
+      '.dc-editable{cursor:text;outline:none;white-space:nowrap;border-radius:3px;padding:0 2px;margin:0 -2px}',
+      '[data-dc-slot]{transition:transform .18s cubic-bezier(.2,.7,.3,1)}',
+      '[data-dc-slot].dc-dragging{transition:none;z-index:10;pointer-events:none}',
+      '[data-dc-slot].dc-dragging .dc-card{box-shadow:0 12px 40px rgba(0,0,0,.25),0 0 0 2px #c96442;transform:scale(1.02)}',
+      '.dc-card{transition:box-shadow .15s,transform .15s;border-radius:2px}',
+      '.dc-card *{scrollbar-width:none}.dc-card *::-webkit-scrollbar{display:none}',
+      '.dc-labelrow{display:flex;align-items:center;gap:4px;height:24px}',
+      '.dc-grip{cursor:grab;display:flex;align-items:center;padding:5px 4px;border-radius:4px;transition:background .12s}',
+      '.dc-grip:hover{background:rgba(0,0,0,.08)}.dc-grip:active{cursor:grabbing}',
+      '.dc-labeltext{cursor:pointer;border-radius:4px;padding:3px 6px;display:flex;align-items:center;transition:background .12s}',
+      '.dc-labeltext:hover{background:rgba(0,0,0,.05)}',
+      '.dc-expand{position:absolute;bottom:100%;right:0;margin-bottom:5px;z-index:2;opacity:0;transition:opacity .12s;width:22px;height:22px;border-radius:5px;border:none;cursor:pointer;padding:0;background:transparent;color:rgba(60,50,40,.7);display:flex;align-items:center;justify-content:center}',
+      '.dc-expand:hover{background:rgba(0,0,0,.06);color:#2a251f}',
+      '[data-dc-slot]:hover .dc-expand{opacity:1}',
+    ].join('\n');
+    document.head.appendChild(s);
+  }
+
+  const DCCtx = React.createContext(null);
+
+  function DesignCanvas({ children, minScale, maxScale, style }) {
+    const [state, setState] = React.useState({ sections: {}, focus: null });
+    const [ready, setReady] = React.useState(false);
+    const didRead = React.useRef(false);
+    React.useEffect(() => {
+      let off = false;
+      const t = setTimeout(() => { if (!off) { didRead.current = true; setReady(true); } }, 80);
+      return () => { off = true; clearTimeout(t); };
+    }, []);
+    const registry = {}, sectionMeta = {}, sectionOrder = [];
+    React.Children.forEach(children, (sec) => {
+      if (!sec || sec.type !== DCSection) return;
+      const sid = sec.props.id ?? sec.props.title; if (!sid) return;
+      sectionOrder.push(sid);
+      const persisted = state.sections[sid] || {}, srcIds = [];
+      React.Children.forEach(sec.props.children, (ab) => {
+        if (!ab || ab.type !== DCArtboard) return;
+        const aid = ab.props.id ?? ab.props.label; if (!aid) return;
+        registry[`${sid}/${aid}`] = { sectionId: sid, artboard: ab };
+        srcIds.push(aid);
+      });
+      const kept = (persisted.order || []).filter((k) => srcIds.includes(k));
+      sectionMeta[sid] = {
+        title: persisted.title ?? sec.props.title, subtitle: sec.props.subtitle,
+        slotIds: [...kept, ...srcIds.filter((k) => !kept.includes(k))],
+      };
+    });
+    const api = React.useMemo(() => ({
+      state, section: (id) => state.sections[id] || {},
+      patchSection: (id, p) => setState((s) => ({
+        ...s, sections: { ...s.sections, [id]: { ...s.sections[id], ...(typeof p === 'function' ? p(s.sections[id] || {}) : p) } },
+      })),
+      setFocus: (slotId) => setState((s) => ({ ...s, focus: slotId })),
+    }), [state]);
+    React.useEffect(() => {
+      const onKey = (e) => { if (e.key === 'Escape') api.setFocus(null); };
+      document.addEventListener('keydown', onKey);
+      return () => document.removeEventListener('keydown', onKey);
+    }, [api]);
+    return (
+      <DCCtx.Provider value={api}>
+        <DCViewport minScale={minScale} maxScale={maxScale} style={style}>{ready && children}</DCViewport>
+        {state.focus && registry[state.focus] && (
+          <DCFocusOverlay entry={registry[state.focus]} sectionMeta={sectionMeta} sectionOrder={sectionOrder} />
+        )}
+      </DCCtx.Provider>
+    );
+  }
+
+  function DCViewport({ children, minScale = 0.1, maxScale = 8, style = {} }) {
+    const vpRef = React.useRef(null), worldRef = React.useRef(null);
+    const tf = React.useRef({ x: 0, y: 0, scale: 1 });
+    const apply = React.useCallback(() => {
+      const { x, y, scale } = tf.current;
+      if (worldRef.current) worldRef.current.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`;
+    }, []);
+    React.useEffect(() => {
+      const vp = vpRef.current; if (!vp) return;
+      const zoomAt = (cx, cy, factor) => {
+        const r = vp.getBoundingClientRect(), px = cx - r.left, py = cy - r.top, t = tf.current;
+        const next = Math.min(maxScale, Math.max(minScale, t.scale * factor)), k = next / t.scale;
+        t.x = px - (px - t.x) * k; t.y = py - (py - t.y) * k; t.scale = next; apply();
+      };
+      const isMouseWheel = (e) => e.deltaMode !== 0 || (e.deltaX === 0 && Number.isInteger(e.deltaY) && Math.abs(e.deltaY) >= 40);
+      const onWheel = (e) => {
+        e.preventDefault();
+        if (e.ctrlKey) zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.01));
+        else if (isMouseWheel(e)) zoomAt(e.clientX, e.clientY, Math.exp(-Math.sign(e.deltaY) * 0.18));
+        else { tf.current.x -= e.deltaX; tf.current.y -= e.deltaY; apply(); }
+      };
+      let drag = null;
+      const onPointerDown = (e) => {
+        const onBg = !e.target.closest('[data-dc-slot], .dc-editable');
+        if (!(e.button === 1 || (e.button === 0 && onBg))) return;
+        e.preventDefault(); vp.setPointerCapture(e.pointerId);
+        drag = { id: e.pointerId, lx: e.clientX, ly: e.clientY }; vp.style.cursor = 'grabbing';
+      };
+      const onPointerMove = (e) => {
+        if (!drag || e.pointerId !== drag.id) return;
+        tf.current.x += e.clientX - drag.lx; tf.current.y += e.clientY - drag.ly;
+        drag.lx = e.clientX; drag.ly = e.clientY; apply();
+      };
+      const onPointerUp = (e) => {
+        if (!drag || e.pointerId !== drag.id) return;
+        vp.releasePointerCapture(e.pointerId); drag = null; vp.style.cursor = '';
+      };
+      vp.addEventListener('wheel', onWheel, { passive: false });
+      vp.addEventListener('pointerdown', onPointerDown);
+      vp.addEventListener('pointermove', onPointerMove);
+      vp.addEventListener('pointerup', onPointerUp);
+      vp.addEventListener('pointercancel', onPointerUp);
+      return () => {
+        vp.removeEventListener('wheel', onWheel);
+        vp.removeEventListener('pointerdown', onPointerDown);
+        vp.removeEventListener('pointermove', onPointerMove);
+        vp.removeEventListener('pointerup', onPointerUp);
+        vp.removeEventListener('pointercancel', onPointerUp);
+      };
+    }, [apply, minScale, maxScale]);
+    const gridSvg = `url("data:image/svg+xml,%3Csvg width='120' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M120 0H0v120' fill='none' stroke='${encodeURIComponent(DC.grid)}' stroke-width='1'/%3E%3C/svg%3E")`;
+    return (
+      <div ref={vpRef} style={{ height: '100%', width: '100vw', background: DC.bg, overflow: 'hidden', overscrollBehavior: 'none', touchAction: 'none', position: 'relative', fontFamily: DC.font, ...style }}>
+        <div ref={worldRef} style={{ position: 'absolute', top: 0, left: 0, transformOrigin: '0 0', willChange: 'transform', width: 'max-content', minWidth: '100%', minHeight: '100%', padding: '60px 0 80px' }}>
+          <div style={{ position: 'absolute', inset: -6000, backgroundImage: gridSvg, backgroundSize: '120px 120px', pointerEvents: 'none', zIndex: -1 }} />
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  function DCSection({ id, title, subtitle, children, gap = 48 }) {
+    const ctx = React.useContext(DCCtx);
+    const sid = id ?? title;
+    const all = React.Children.toArray(children);
+    const artboards = all.filter((c) => c && c.type === DCArtboard);
+    const srcOrder = artboards.map((a) => a.props.id ?? a.props.label);
+    const sec = (ctx && sid && ctx.section(sid)) || {};
+    const order = React.useMemo(() => {
+      const kept = (sec.order || []).filter((k) => srcOrder.includes(k));
+      return [...kept, ...srcOrder.filter((k) => !kept.includes(k))];
+    }, [sec.order, srcOrder.join('|')]);
+    const byId = Object.fromEntries(artboards.map((a) => [a.props.id ?? a.props.label, a]));
+    return (
+      <div data-dc-section={sid} style={{ marginBottom: 80, position: 'relative' }}>
+        <div style={{ padding: '0 60px 56px' }}>
+          <div style={{ fontSize: 28, fontWeight: 600, color: DC.title, letterSpacing: -0.4, marginBottom: 6 }}>{sec.title ?? title}</div>
+          {subtitle && <div style={{ fontSize: 16, color: DC.subtitle }}>{subtitle}</div>}
+        </div>
+        <div style={{ display: 'flex', gap, padding: '0 60px', alignItems: 'flex-start', width: 'max-content' }}>
+          {order.map((k) => byId[k] && (
+            <DCArtboardFrame key={k} sectionId={sid} artboard={byId[k]} order={order}
+              label={(sec.labels || {})[k] ?? byId[k].props.label}
+              onRename={(v) => ctx && ctx.patchSection(sid, (x) => ({ labels: { ...x.labels, [k]: v } }))}
+              onReorder={(next) => ctx && ctx.patchSection(sid, { order: next })}
+              onFocus={() => ctx && ctx.setFocus(`${sid}/${k}`)} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function DCArtboard() { return null; }
+
+  function DCArtboardFrame({ sectionId, artboard, label, order, onRename, onReorder, onFocus }) {
+    const { id: rawId, label: rawLabel, width = 260, height = 480, children, style = {} } = artboard.props;
+    const id = rawId ?? rawLabel;
+    const ref = React.useRef(null);
+    const onGripDown = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const me = ref.current;
+      const scale = me.getBoundingClientRect().width / me.offsetWidth || 1;
+      const peers = Array.from(document.querySelectorAll(`[data-dc-section="${sectionId}"] [data-dc-slot]`));
+      const homes = peers.map((el) => ({ el, id: el.dataset.dcSlot, x: el.getBoundingClientRect().left }));
+      const slotXs = homes.map((h) => h.x);
+      const startIdx = order.indexOf(id), startX = e.clientX;
+      let liveOrder = order.slice();
+      me.classList.add('dc-dragging');
+      const layout = () => { for (const h of homes) { if (h.id === id) continue; h.el.style.transform = `translateX(${(slotXs[liveOrder.indexOf(h.id)] - h.x) / scale}px)`; } };
+      const move = (ev) => {
+        const dx = ev.clientX - startX;
+        me.style.transform = `translateX(${dx / scale}px)`;
+        const cur = homes[startIdx].x + dx;
+        let nearest = 0, best = Infinity;
+        for (let i = 0; i < slotXs.length; i++) { const d = Math.abs(slotXs[i] - cur); if (d < best) { best = d; nearest = i; } }
+        if (liveOrder.indexOf(id) !== nearest) { liveOrder = order.filter((k) => k !== id); liveOrder.splice(nearest, 0, id); layout(); }
+      };
+      const up = () => {
+        document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up);
+        const finalSlot = liveOrder.indexOf(id);
+        me.classList.remove('dc-dragging');
+        me.style.transform = `translateX(${(slotXs[finalSlot] - homes[startIdx].x) / scale}px)`;
+        setTimeout(() => {
+          for (const h of homes) { h.el.style.transition = 'none'; h.el.style.transform = ''; }
+          if (liveOrder.join('|') !== order.join('|')) onReorder(liveOrder);
+          requestAnimationFrame(() => requestAnimationFrame(() => { for (const h of homes) h.el.style.transition = ''; }));
+        }, 180);
+      };
+      document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
+    };
+    return (
+      <div ref={ref} data-dc-slot={id} style={{ position: 'relative', flexShrink: 0 }}>
+        <div className="dc-labelrow" style={{ position: 'absolute', bottom: '100%', left: -4, marginBottom: 4, color: DC.label }}>
+          <div className="dc-grip" onPointerDown={onGripDown}>
+            <svg width="9" height="13" viewBox="0 0 9 13" fill="currentColor"><circle cx="2" cy="2" r="1.1"/><circle cx="7" cy="2" r="1.1"/><circle cx="2" cy="6.5" r="1.1"/><circle cx="7" cy="6.5" r="1.1"/><circle cx="2" cy="11" r="1.1"/><circle cx="7" cy="11" r="1.1"/></svg>
+          </div>
+          <div className="dc-labeltext" onClick={onFocus}>
+            <span className="dc-editable" style={{ fontSize: 15, fontWeight: 500, color: DC.label, lineHeight: 1 }}>{label}</span>
+          </div>
+        </div>
+        <button className="dc-expand" onClick={onFocus} onPointerDown={(e) => e.stopPropagation()}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M7 1h4v4M5 11H1V7M11 1L7.5 4.5M1 11l3.5-3.5"/></svg>
+        </button>
+        <div className="dc-card" style={{ boxShadow: '0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06)', overflow: 'hidden', width, height, background: '#fff', ...style }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  function DCFocusOverlay({ entry, sectionMeta, sectionOrder }) {
+    const ctx = React.useContext(DCCtx);
+    const { sectionId, artboard } = entry;
+    const sec = ctx.section(sectionId);
+    const meta = sectionMeta[sectionId];
+    const peers = meta.slotIds;
+    const aid = artboard.props.id ?? artboard.props.label;
+    const idx = peers.indexOf(aid);
+    const secIdx = sectionOrder.indexOf(sectionId);
+    const go = (d) => { const n = peers[(idx + d + peers.length) % peers.length]; if (n) ctx.setFocus(`${sectionId}/${n}`); };
+    const goSection = (d) => {
+      const ns = sectionOrder[(secIdx + d + sectionOrder.length) % sectionOrder.length];
+      const first = sectionMeta[ns] && sectionMeta[ns].slotIds[0];
+      if (first) ctx.setFocus(`${ns}/${first}`);
+    };
+    React.useEffect(() => {
+      const k = (e) => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+        if (e.key === 'ArrowUp') { e.preventDefault(); goSection(-1); }
+        if (e.key === 'ArrowDown') { e.preventDefault(); goSection(1); }
+      };
+      document.addEventListener('keydown', k);
+      return () => document.removeEventListener('keydown', k);
+    });
+    const { width = 260, height = 480, children } = artboard.props;
+    const [vp, setVp] = React.useState({ w: window.innerWidth, h: window.innerHeight });
+    React.useEffect(() => { const r = () => setVp({ w: window.innerWidth, h: window.innerHeight }); window.addEventListener('resize', r); return () => window.removeEventListener('resize', r); }, []);
+    const scale = Math.max(0.1, Math.min((vp.w - 200) / width, (vp.h - 260) / height, 2));
+    const Arrow = ({ dir, onClick }) => (
+      <button onClick={(e) => { e.stopPropagation(); onClick(); }}
+        style={{ position: 'absolute', top: '50%', [dir]: 28, transform: 'translateY(-50%)', border: 'none', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', width: 44, height: 44, borderRadius: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d={dir === 'left' ? 'M11 3L5 9l6 6' : 'M7 3l6 6-6 6'}/></svg>
+      </button>
+    );
+    return ReactDOM.createPortal(
+      <div onClick={() => ctx.setFocus(null)} style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(24,20,16,.6)', backdropFilter: 'blur(14px)', fontFamily: DC.font, color: '#fff' }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 56, display: 'flex', alignItems: 'center', padding: '0 20px', gap: 16 }}>
+          <span style={{ fontSize: 16, fontWeight: 600 }}>{meta.title}</span>
+          {meta.subtitle && <span style={{ fontSize: 12, opacity: .6 }}>{meta.subtitle}</span>}
           <div style={{ flex: 1 }} />
-          <kbd style={{
-            fontSize: 10, color: '#a39880', background: 'rgba(0,0,0,.05)',
-            border: '.5px solid rgba(0,0,0,.1)', borderRadius: 5,
-            padding: '2px 6px', letterSpacing: .3,
-          }}>⌥ scroll = pan · ⌘ scroll = zoom</kbd>
-          <button
-            onClick={onToggleEdit}
-            style={{
-              height: 28, padding: '0 13px', borderRadius: 7, border: 'none',
-              background: editActive ? '#D97757' : 'rgba(0,0,0,.07)',
-              color: editActive ? '#fff' : '#3d3728',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              transition: 'background .15s, color .15s',
-            }}>
-            {editActive ? '✕ Close Tweaks' : '⚙ Tweaks'}
-          </button>
+          <button onClick={() => ctx.setFocus(null)} style={{ border: 'none', background: 'transparent', color: 'rgba(255,255,255,.7)', width: 32, height: 32, borderRadius: 16, fontSize: 20, cursor: 'pointer' }}>×</button>
         </div>
-      );
-    }
-
-    /* ── Artboard screens ───────────────────────────────────────── */
-
-    function HeroScreen({ primary, company, tagline, dark }) {
-      const bg   = dark ? '#0f172a' : '#ffffff';
-      const text = dark ? '#f8fafc' : '#1e293b';
-      const sub  = dark ? '#94a3b8' : '#64748b';
-      return (
-        <div style={{ height: '100%', background: bg, padding: '36px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 18 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '4px 10px', borderRadius: 20,
-            background: primary + '22', color: primary,
-            fontSize: 10, fontWeight: 700, letterSpacing: .8, width: 'fit-content',
-          }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: primary, display: 'inline-block' }}/>
-            ENTERPRISE · TECHNOLOGY
-          </div>
-          <div style={{ fontSize: 34, fontWeight: 800, color: text, lineHeight: 1.08, letterSpacing: -1 }}>
-            {company}
-          </div>
-          <div style={{ fontSize: 13.5, color: sub, lineHeight: 1.65, maxWidth: 265 }}>
-            {tagline}. Transforming businesses with cutting-edge IT solutions.
-          </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <button style={{
-              padding: '10px 20px', borderRadius: 8, border: 'none',
-              background: primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            }}>Get Started →</button>
-            <button style={{
-              padding: '10px 16px', borderRadius: 8, border: '.5px solid rgba(0,0,0,.12)',
-              background: 'transparent', color: text, fontSize: 13, fontWeight: 500, cursor: 'pointer',
-            }}>Learn more</button>
-          </div>
-          <div style={{ display: 'flex', gap: 28, marginTop: 16 }}>
-            {[['500+', 'Clients'], ['12yr', 'Experience'], ['99.9%', 'Uptime']].map(([v, l]) => (
-              <div key={l}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: primary }}>{v}</div>
-                <div style={{ fontSize: 10, color: sub, marginTop: 1 }}>{l}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    function ServicesScreen({ primary, dark }) {
-      const bg     = dark ? '#0f172a' : '#f8fafc';
-      const cardBg = dark ? '#1e293b' : '#ffffff';
-      const text   = dark ? '#f8fafc' : '#1e293b';
-      const sub    = dark ? '#64748b' : '#64748b';
-      const items  = [
-        { icon: '☁', label: 'Cloud', desc: 'AWS · Azure · GCP' },
-        { icon: '🔒', label: 'Security', desc: 'Zero-trust · SOC2' },
-        { icon: '⚡', label: 'DevOps',  desc: 'CI/CD · Kubernetes' },
-        { icon: '📊', label: 'Analytics', desc: 'BI · Dashboards' },
-        { icon: '🤖', label: 'AI / ML', desc: 'LLMs · MLOps' },
-        { icon: '🛠', label: 'Managed IT', desc: '24/7 Support' },
-      ];
-      return (
-        <div style={{ height: '100%', background: bg, padding: '22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: text }}>Our Services</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
-            {items.map(s => (
-              <div key={s.label} style={{
-                background: cardBg, borderRadius: 10, padding: '14px 12px',
-                display: 'flex', flexDirection: 'column', gap: 6,
-                boxShadow: '0 1px 3px rgba(0,0,0,.06)',
-              }}>
-                <div style={{ fontSize: 22 }}>{s.icon}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: text }}>{s.label}</div>
-                <div style={{ fontSize: 10, color: sub }}>{s.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    function DashboardScreen({ primary, accent, dark }) {
-      const bg   = dark ? '#0f172a' : '#ffffff';
-      const card = dark ? '#1e293b' : '#f1f5f9';
-      const text = dark ? '#f8fafc' : '#1e293b';
-      const bars = [42, 68, 55, 80, 62, 91, 48, 95, 74, 83, 60, 77];
-      return (
-        <div style={{ height: '100%', background: bg, padding: '18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: text }}>Dashboard</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-            {[['99.9%','Uptime'], ['2.4ms','Latency'], ['847','Servers']].map(([v, l]) => (
-              <div key={l} style={{ background: card, borderRadius: 8, padding: '10px', textAlign: 'center' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: primary }}>{v}</div>
-                <div style={{ fontSize: 9, color: '#94a3b8', marginTop: 2 }}>{l}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ flex: 1, background: card, borderRadius: 10, padding: '12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 600, color: text }}>Traffic — last 24 h</div>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
-              {bars.map((h, i) => (
-                <div key={i} style={{
-                  flex: 1, height: h + '%', borderRadius: '2px 2px 0 0',
-                  background: i === 7 ? primary : accent + '55',
-                  transition: 'height .3s',
-                }}/>
-              ))}
+        <div style={{ position: 'absolute', top: 56, bottom: 56, left: 80, right: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: width * scale, height: height * scale, position: 'relative' }}>
+            <div style={{ width, height, transform: `scale(${scale})`, transformOrigin: 'top left', background: '#fff', borderRadius: 2, overflow: 'hidden', boxShadow: '0 20px 80px rgba(0,0,0,.4)' }}>
+              {children}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {[['🟢','API online'],['🔵','DB healthy'],['🟡','CDN check']].map(([ic, lb]) => (
-              <div key={lb} style={{ flex: 1, background: card, borderRadius: 8, padding: '8px', fontSize: 9, color: text, textAlign: 'center' }}>
-                <div>{ic}</div><div style={{ marginTop: 3 }}>{lb}</div>
-              </div>
-            ))}
+          <div onClick={(e) => e.stopPropagation()} style={{ fontSize: 13, fontWeight: 500, opacity: .8 }}>
+            {(sec.labels || {})[aid] ?? artboard.props.label}
+            <span style={{ opacity: .5, marginLeft: 10 }}>{idx + 1} / {peers.length}</span>
           </div>
         </div>
-      );
-    }
-
-    function ContactScreen({ primary, dark }) {
-      const bg      = dark ? '#0f172a' : '#ffffff';
-      const inputBg = dark ? '#1e293b' : '#f8fafc';
-      const text    = dark ? '#f8fafc' : '#1e293b';
-      return (
-        <div style={{ height: '100%', background: bg, padding: '24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: text }}>Get in Touch</div>
-          <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.5 }}>
-            Have a project in mind? We'll get back to you within 24 hours.
-          </div>
-          {['Full Name', 'Email Address', 'Company'].map(ph => (
-            <div key={ph} style={{
-              height: 36, borderRadius: 8, background: inputBg,
-              border: '.5px solid rgba(0,0,0,.1)', padding: '0 12px',
-              display: 'flex', alignItems: 'center', fontSize: 12, color: '#94a3b8',
-            }}>{ph}</div>
+        <Arrow dir="left" onClick={() => go(-1)} />
+        <Arrow dir="right" onClick={() => go(1)} />
+        <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8 }}>
+          {peers.map((p, i) => (
+            <button key={p} onClick={() => ctx.setFocus(`${sectionId}/${p}`)}
+              style={{ border: 'none', padding: 0, cursor: 'pointer', width: 6, height: 6, borderRadius: 3, background: i === idx ? '#fff' : 'rgba(255,255,255,.3)' }} />
           ))}
-          <div style={{
-            flex: 1, borderRadius: 8, background: inputBg,
-            border: '.5px solid rgba(0,0,0,.1)', padding: '10px 12px',
-            fontSize: 12, color: '#94a3b8',
-          }}>How can we help you?</div>
-          <button style={{
-            height: 40, borderRadius: 8, border: 'none',
-            background: primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          }}>Send Message →</button>
         </div>
-      );
-    }
+      </div>,
+      document.body,
+    );
+  }
 
-    function TeamScreen({ primary, dark }) {
-      const bg   = dark ? '#0f172a' : '#f8fafc';
-      const card = dark ? '#1e293b' : '#ffffff';
-      const text = dark ? '#f8fafc' : '#1e293b';
-      const sub  = dark ? '#64748b' : '#64748b';
-      const team = [
-        { initials: 'AK', name: 'Alex Kymora', role: 'CEO & Founder' },
-        { initials: 'MR', name: 'Maria R.',    role: 'CTO' },
-        { initials: 'DN', name: 'David N.',    role: 'Head of Security' },
-        { initials: 'SP', name: 'Sara P.',     role: 'Lead DevOps' },
-      ];
-      return (
-        <div style={{ height: '100%', background: bg, padding: '22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: text }}>Our Team</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {team.map(m => (
-              <div key={m.name} style={{
-                background: card, borderRadius: 10, padding: '12px 14px',
-                display: 'flex', alignItems: 'center', gap: 12,
-                boxShadow: '0 1px 3px rgba(0,0,0,.06)',
-              }}>
-                <div style={{
-                  width: 38, height: 38, borderRadius: '50%',
-                  background: primary + '22', color: primary,
-                  fontSize: 13, fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}>{m.initials}</div>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: text }}>{m.name}</div>
-                  <div style={{ fontSize: 10, color: sub, marginTop: 1 }}>{m.role}</div>
-                </div>
-              </div>
-            ))}
+  function HeroScreen({ primary, company, tagline, dark }) {
+    const bg = dark ? '#0f172a' : '#fff', text = dark ? '#f8fafc' : '#1e293b', sub = dark ? '#94a3b8' : '#64748b';
+    return (
+      <div style={{ height: '100%', background: bg, padding: '36px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 18 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 20, background: primary + '22', color: primary, fontSize: 10, fontWeight: 700, letterSpacing: .8, width: 'fit-content' }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: primary, display: 'inline-block' }}/>ENTERPRISE · TECHNOLOGY
+        </div>
+        <div style={{ fontSize: 34, fontWeight: 800, color: text, lineHeight: 1.08, letterSpacing: -1 }}>{company}</div>
+        <div style={{ fontSize: 13.5, color: sub, lineHeight: 1.65, maxWidth: 265 }}>{tagline}. Transforming businesses with cutting-edge IT solutions.</div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Get Started →</button>
+          <button style={{ padding: '10px 16px', borderRadius: 8, border: '.5px solid rgba(0,0,0,.12)', background: 'transparent', color: text, fontSize: 13, cursor: 'pointer' }}>Learn more</button>
+        </div>
+        <div style={{ display: 'flex', gap: 28, marginTop: 8 }}>
+          {[['500+','Clients'],['12yr','Experience'],['99.9%','Uptime']].map(([v,l]) => (
+            <div key={l}><div style={{ fontSize: 18, fontWeight: 700, color: primary }}>{v}</div><div style={{ fontSize: 10, color: sub, marginTop: 1 }}>{l}</div></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function ServicesScreen({ primary, dark }) {
+    const bg = dark ? '#0f172a' : '#f8fafc', card = dark ? '#1e293b' : '#fff', text = dark ? '#f8fafc' : '#1e293b', sub = dark ? '#64748b' : '#64748b';
+    const items = [['☁','Cloud','AWS · Azure · GCP'],['🔒','Security','Zero-trust · SOC2'],['⚡','DevOps','CI/CD · Kubernetes'],['📊','Analytics','BI · Dashboards'],['🤖','AI / ML','LLMs · MLOps'],['🛠','Managed IT','24/7 Support']];
+    return (
+      <div style={{ height: '100%', background: bg, padding: '22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: text }}>Our Services</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+          {items.map(([ic,lb,desc]) => (
+            <div key={lb} style={{ background: card, borderRadius: 10, padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 6, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+              <div style={{ fontSize: 22 }}>{ic}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: text }}>{lb}</div>
+              <div style={{ fontSize: 10, color: sub }}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function DashboardScreen({ primary, accent, dark }) {
+    const bg = dark ? '#0f172a' : '#fff', card = dark ? '#1e293b' : '#f1f5f9', text = dark ? '#f8fafc' : '#1e293b';
+    const bars = [42,68,55,80,62,91,48,95,74,83,60,77];
+    return (
+      <div style={{ height: '100%', background: bg, padding: '18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: text }}>Dashboard</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          {[['99.9%','Uptime'],['2.4ms','Latency'],['847','Servers']].map(([v,l]) => (
+            <div key={l} style={{ background: card, borderRadius: 8, padding: '10px', textAlign: 'center' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: primary }}>{v}</div>
+              <div style={{ fontSize: 9, color: '#94a3b8', marginTop: 2 }}>{l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ flex: 1, background: card, borderRadius: 10, padding: '12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: text }}>Traffic — last 24 h</div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
+            {bars.map((h, i) => <div key={i} style={{ flex: 1, height: h+'%', borderRadius: '2px 2px 0 0', background: i === 7 ? primary : accent+'55' }}/>)}
           </div>
         </div>
-      );
-    }
+        <div style={{ display: 'flex', gap: 8 }}>
+          {[['🟢','API online'],['🔵','DB healthy'],['🟡','CDN check']].map(([ic,lb]) => (
+            <div key={lb} style={{ flex: 1, background: card, borderRadius: 8, padding: '8px', fontSize: 9, color: text, textAlign: 'center' }}>
+              <div>{ic}</div><div style={{ marginTop: 3 }}>{lb}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-    /* ── App ────────────────────────────────────────────────────── */
-    function App() {
-      const [t, setTweak]       = useTweaks(TWEAK_DEFAULTS);
-      const [editActive, setEdit] = React.useState(false);
+  function ContactScreen({ primary, dark }) {
+    const bg = dark ? '#0f172a' : '#fff', inp = dark ? '#1e293b' : '#f8fafc', text = dark ? '#f8fafc' : '#1e293b';
+    return (
+      <div style={{ height: '100%', background: bg, padding: '24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: text }}>Get in Touch</div>
+        <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.5 }}>Have a project in mind? We'll get back to you within 24 hours.</div>
+        {['Full Name','Email Address','Company'].map(ph => (
+          <div key={ph} style={{ height: 36, borderRadius: 8, background: inp, border: '.5px solid rgba(0,0,0,.1)', padding: '0 12px', display: 'flex', alignItems: 'center', fontSize: 12, color: '#94a3b8' }}>{ph}</div>
+        ))}
+        <div style={{ flex: 1, borderRadius: 8, background: inp, border: '.5px solid rgba(0,0,0,.1)', padding: '10px 12px', fontSize: 12, color: '#94a3b8' }}>How can we help you?</div>
+        <button style={{ height: 40, borderRadius: 8, border: 'none', background: primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Send Message →</button>
+      </div>
+    );
+  }
 
-      const toggleEdit = () => {
-        const next = !editActive;
-        setEdit(next);
-        window.postMessage({ type: next ? '__activate_edit_mode' : '__deactivate_edit_mode' }, '*');
-      };
+  function TeamScreen({ primary, dark }) {
+    const bg = dark ? '#0f172a' : '#f8fafc', card = dark ? '#1e293b' : '#fff', text = dark ? '#f8fafc' : '#1e293b', sub = dark ? '#64748b' : '#64748b';
+    const team = [['AK','Alex Kymora','CEO & Founder'],['MR','Maria R.','CTO'],['DN','David N.','Head of Security'],['SP','Sara P.','Lead DevOps']];
+    return (
+      <div style={{ height: '100%', background: bg, padding: '22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: text }}>Our Team</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          {team.map(([ini,name,role]) => (
+            <div key={name} style={{ background: card, borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+              <div style={{ width: 38, height: 38, borderRadius: '50%', background: primary+'22', color: primary, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ini}</div>
+              <div><div style={{ fontSize: 12, fontWeight: 600, color: text }}>{name}</div><div style={{ fontSize: 10, color: sub, marginTop: 1 }}>{role}</div></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-      React.useEffect(() => {
-        const h = (e) => {
-          if (e?.data?.type === '__edit_mode_dismissed') setEdit(false);
-        };
-        window.addEventListener('message', h);
-        return () => window.removeEventListener('message', h);
-      }, []);
+  const TWEAK_DEFAULTS = { primaryColor: '#D97757', accentColor: '#3B82F6', companyName: 'Kymora IT', tagline: 'Enterprise Technology Solutions', dark: false };
 
-      return (
-        <>
-          <Toolbar editActive={editActive} onToggleEdit={toggleEdit} />
-          <div style={{ paddingTop: 44, height: '100vh' }}>
-            <DesignCanvas>
+  function Toolbar({ editActive, onToggleEdit }) {
+    return (
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 44, zIndex: 50, background: 'rgba(255,255,255,.88)', backdropFilter: 'blur(14px)', borderBottom: '.5px solid rgba(0,0,0,.08)', display: 'flex', alignItems: 'center', padding: '0 18px', gap: 14 }}>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect width="22" height="22" rx="6" fill="#D97757"/><path d="M6 16L11 6L16 16" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 12.5H14" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+        <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1a1510', letterSpacing: -.2 }}>Kymora IT</span>
+        <span style={{ fontSize: 11, color: '#a39880', fontWeight: 500 }}>Design Canvas</span>
+        <div style={{ flex: 1 }} />
+        <button onClick={onToggleEdit} style={{ height: 28, padding: '0 13px', borderRadius: 7, border: 'none', background: editActive ? '#D97757' : 'rgba(0,0,0,.07)', color: editActive ? '#fff' : '#3d3728', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+          {editActive ? '✕ Close Tweaks' : '⚙ Tweaks'}
+        </button>
+      </div>
+    );
+  }
 
-              <DCSection id="homepage" title="Homepage" subtitle="Main marketing screens">
-                <DCArtboard id="hero-light" label="Hero · Light" width={340} height={540}>
-                  <HeroScreen primary={t.primaryColor} company={t.companyName} tagline={t.tagline} dark={false} />
-                </DCArtboard>
-                <DCArtboard id="hero-dark" label="Hero · Dark" width={340} height={540}>
-                  <HeroScreen primary={t.primaryColor} company={t.companyName} tagline={t.tagline} dark={true} />
-                </DCArtboard>
-                <DCArtboard id="services" label="Services · Grid" width={300} height={540}>
-                  <ServicesScreen primary={t.primaryColor} dark={t.dark} />
-                </DCArtboard>
-                <DCArtboard id="team" label="Team · Cards" width={280} height={540}>
-                  <TeamScreen primary={t.primaryColor} dark={t.dark} />
-                </DCArtboard>
-                <DCArtboard id="contact" label="Contact · Form" width={300} height={540}>
-                  <ContactScreen primary={t.primaryColor} dark={t.dark} />
-                </DCArtboard>
-              </DCSection>
+  function App() {
+    const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+    const [editActive, setEdit] = React.useState(false);
+    return (
+      <>
+        <Toolbar editActive={editActive} onToggleEdit={() => setEdit(v => !v)} />
+        <div style={{ paddingTop: 44, height: '100vh' }}>
+          <DesignCanvas>
+            <DCSection id="homepage" title="Homepage" subtitle="Main marketing screens">
+              <DCArtboard id="hero-light" label="Hero · Light" width={340} height={540}><HeroScreen primary={t.primaryColor} company={t.companyName} tagline={t.tagline} dark={false}/></DCArtboard>
+              <DCArtboard id="hero-dark"  label="Hero · Dark"  width={340} height={540}><HeroScreen primary={t.primaryColor} company={t.companyName} tagline={t.tagline} dark={true}/></DCArtboard>
+              <DCArtboard id="services"   label="Services"     width={300} height={540}><ServicesScreen primary={t.primaryColor} dark={t.dark}/></DCArtboard>
+              <DCArtboard id="team"       label="Team"         width={280} height={540}><TeamScreen primary={t.primaryColor} dark={t.dark}/></DCArtboard>
+              <DCArtboard id="contact"    label="Contact"      width={300} height={540}><ContactScreen primary={t.primaryColor} dark={t.dark}/></DCArtboard>
+            </DCSection>
+            <DCSection id="dashboard" title="Admin Dashboard" subtitle="Monitoring & analytics">
+              <DCArtboard id="dash-light" label="Overview · Light" width={380} height={460}><DashboardScreen primary={t.primaryColor} accent={t.accentColor} dark={false}/></DCArtboard>
+              <DCArtboard id="dash-dark"  label="Overview · Dark"  width={380} height={460}><DashboardScreen primary={t.primaryColor} accent={t.accentColor} dark={true}/></DCArtboard>
+            </DCSection>
+          </DesignCanvas>
+        </div>
+        <TweaksPanel title="Kymora Tweaks" open={editActive} onClose={() => setEdit(false)}>
+          <TweakSection label="Brand" />
+          <TweakText  label="Company" value={t.companyName}  onChange={(v) => setTweak('companyName', v)} />
+          <TweakText  label="Tagline" value={t.tagline}      onChange={(v) => setTweak('tagline', v)} />
+          <TweakSection label="Colors" />
+          <TweakColor label="Primary" value={t.primaryColor} onChange={(v) => setTweak('primaryColor', v)} />
+          <TweakColor label="Accent"  value={t.accentColor}  onChange={(v) => setTweak('accentColor', v)} />
+          <TweakSection label="Theme" />
+          <TweakToggle label="Dark mode" value={t.dark} onChange={(v) => setTweak('dark', v)} />
+        </TweaksPanel>
+      </>
+    );
+  }
 
-              <DCSection id="dashboard" title="Admin Dashboard" subtitle="Monitoring & analytics views">
-                <DCArtboard id="dash-light" label="Overview · Light" width={380} height={460}>
-                  <DashboardScreen primary={t.primaryColor} accent={t.accentColor} dark={false} />
-                </DCArtboard>
-                <DCArtboard id="dash-dark" label="Overview · Dark" width={380} height={460}>
-                  <DashboardScreen primary={t.primaryColor} accent={t.accentColor} dark={true} />
-                </DCArtboard>
-              </DCSection>
-
-            </DesignCanvas>
-          </div>
-
-          <TweaksPanel title="Kymora Tweaks">
-            <TweakSection label="Brand" />
-            <TweakText  label="Company" value={t.companyName}  onChange={(v) => setTweak('companyName', v)} />
-            <TweakText  label="Tagline" value={t.tagline}      onChange={(v) => setTweak('tagline', v)} />
-            <TweakSection label="Colors" />
-            <TweakColor label="Primary" value={t.primaryColor} onChange={(v) => setTweak('primaryColor', v)} />
-            <TweakColor label="Accent"  value={t.accentColor}  onChange={(v) => setTweak('accentColor', v)} />
-            <TweakSection label="Theme" />
-            <TweakToggle label="Dark mode" value={t.dark} onChange={(v) => setTweak('dark', v)} />
-          </TweaksPanel>
-        </>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
 </html>
